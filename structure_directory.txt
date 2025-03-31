@@ -1,0 +1,85 @@
+vulcnn-webapp-backend/
+│
+├── api/                       # Main API service
+│   ├── app.py                 # Entry point của API
+│   ├── config.py              # Cấu hình chung
+│   ├── requirements.txt       # Python dependencies
+│   ├── Dockerfile             # Docker configuration
+│   │
+│   ├── controllers/           # API controllers/routes
+│   │   ├── auth.py            # Xác thực người dùng
+│   │   ├── users.py           # Quản lý người dùng
+│   │   ├── projects.py        # Quản lý dự án
+│   │   ├── files.py           # Quản lý file
+│   │   ├── scans.py           # Quản lý quá trình quét
+│   │   └── reports.py         # Quản lý báo cáo
+│   │
+│   ├── models/                # Data models
+│   │   ├── user.py            # Model User
+│   │   ├── project.py         # Model Project
+│   │   ├── file.py            # Model File
+│   │   ├── scan.py            # Model Scan
+│   │   ├── vulnerability.py   # Model Vulnerability
+│   │   └── report.py          # Model Report
+│   │
+│   ├── services/              # Business logic
+│   │   ├── auth_service.py    # Xử lý xác thực
+│   │   ├── user_service.py    # Xử lý người dùng
+│   │   ├── project_service.py # Xử lý dự án
+│   │   ├── file_service.py    # Xử lý file
+│   │   ├── scan_service.py    # Xử lý quét
+│   │   └── report_service.py  # Xử lý báo cáo
+│   │
+│   ├── utils/                 # Utility functions
+│   │   ├── validation.py      # Xác thực dữ liệu
+│   │   ├── auth_utils.py      # Công cụ xác thực
+│   │   └── response.py        # Xử lý response
+│   │
+│   └── middleware/            # API middleware
+│       ├── auth.py            # Xác thực 
+│       ├── error_handler.py   # Xử lý lỗi
+│       └── logger.py          # Ghi log
+│
+├── normalization_service/     # Service chuẩn hóa mã nguồn
+│   ├── app.py                 # Entry point
+│   ├── requirements.txt       # Python dependencies
+│   ├── Dockerfile             # Docker configuration
+│   └── normalization/
+│       ├── clean_gadget.py    # Di chuyển từ mã nguồn gốc
+│       └── normalizer.py      # Xử lý chuẩn hóa mã
+│
+├── pdg_generator_service/     # Service tạo PDG từ mã nguồn
+│   ├── app.py                 # Entry point
+│   ├── requirements.txt       # Python dependencies
+│   ├── Dockerfile             # Docker configuration
+│   └── generator/
+│       ├── joern_wrapper.py   # Wrapper cho công cụ Joern
+│       └── pdg_generator.py   # Xử lý tạo PDG
+│
+├── image_generator_service/   # Service tạo biểu diễn dạng ảnh
+│   ├── app.py                 # Entry point
+│   ├── requirements.txt       # Python dependencies
+│   ├── Dockerfile             # Docker configuration
+│   └── generator/
+│       ├── sent2vec_wrapper.py # Wrapper cho model Sent2Vec
+│       └── image_generator.py  # Tạo biểu diễn dạng ảnh
+│
+├── prediction_service/        # Service chạy model VulCNN
+│   ├── app.py                 # Entry point
+│   ├── requirements.txt       # Python dependencies
+│   ├── Dockerfile             # Docker configuration
+│   ├── models/                # Machine learning models
+│   │   ├── model.py           # Định nghĩa model architecture
+│   │   └── __init__.py
+│   │
+│   └── predictor/
+│       ├── vulcnn.py          # Core model predictor
+│       └── __init__.py
+│
+└── results_service/           # Service xử lý kết quả
+│   ├── app.py                 # Entry point
+│   ├── requirements.txt       # Python dependencies
+    ├── Dockerfile             # Docker configuration
+    └── processor/
+        ├── vulnerability_processor.py  # Xử lý thông tin lỗ hổng
+        └── report_generator.py         # Tạo báo cáo từ kết quả
