@@ -21,7 +21,7 @@ services:
 
   # Main API Service
   api:
-    build: ./backend/api
+    build: ./api
     ports:
       - "5000:5000"
     depends_on:
@@ -31,62 +31,73 @@ services:
       - DATABASE_URI=postgresql://postgres:postgres@postgres:5432/vulcnn
       - JWT_SECRET_KEY=your-secret-key
       - UPLOAD_FOLDER=/app/data/uploads
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     volumes:
       - ./data:/app/data
+      - ./api:/app
 
   # Normalization Service
   normalization:
-    build: ./backend/normalization_service
+    build: ./normalization_service
     ports:
       - "5001:5001"
     volumes:
       - ./data:/app/data
+      - ./normalization_service:/app
 
   # PDG Generator Service
   pdg-generator:
-    build: ./backend/pdg_generator_service
+    build: ./pdg_generator_service
     ports:
       - "5002:5002"
     volumes:
       - ./data:/app/data
+      - ./pdg_generator_service:/app
 
   # Image Generator Service
   image-generator:
-    build: ./backend/image_generator_service
+    build: ./image_generator_service
     ports:
       - "5003:5003"
     volumes:
       - ./data:/app/data
       - ./models:/app/models
+      - ./image_generator_service:/app
 
   # Prediction Service
   prediction:
-    build: ./backend/prediction_service
+    build: ./prediction_service
     ports:
       - "5004:5004"
     volumes:
       - ./data:/app/data
       - ./models:/app/models
+      - ./prediction_service:/app
 
   # Results Service
   results:
-    build: ./backend/results_service
+    build: ./results_service
     ports:
       - "5005:5005"
     volumes:
       - ./data:/app/data
+      - ./results_service:/app
 
   # Celery Worker
   worker:
-    build: ./backend/api
-    command: celery -A tasks worker --loglevel=info
+    build: ./api
+    command: celery -A services.scan_service.celery worker --loglevel=info
     depends_on:
       - redis
       - api
     environment:
       - DATABASE_URI=postgresql://postgres:postgres@postgres:5432/vulcnn
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     volumes:
       - ./data:/app/data
+      - ./api:/app
 
 volumes:
   postgres_data:
