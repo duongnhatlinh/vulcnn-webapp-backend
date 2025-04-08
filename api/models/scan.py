@@ -1,5 +1,5 @@
 from app import db
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 class Scan(db.Model):
@@ -8,7 +8,7 @@ class Scan(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     project_id = db.Column(db.String(36), db.ForeignKey('projects.id'), nullable=False)
     user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
-    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    started_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     completed_at = db.Column(db.DateTime)
     status = db.Column(db.String(50), default='pending')
     scan_options = db.Column(db.Text)  # JSON string

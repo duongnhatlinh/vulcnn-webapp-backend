@@ -3,7 +3,7 @@ from flask import request, jsonify
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from models.user import User
 from models.api_key import ApiKey
-import datetime
+from datetime import datetime, timezone
 
 def jwt_required_with_api_key(fn):
     """
@@ -29,7 +29,7 @@ def jwt_required_with_api_key(fn):
                 return jsonify({"message": "Invalid API key"}), 401
             
             # Check if expired
-            if api_key_record.expires_at < datetime.datetime.utcnow():
+            if api_key_record.expires_at < datetime.datetime.now(timezone.utc):
                 return jsonify({"message": "API key has expired"}), 401
             
             # Set the identity to the user associated with this key

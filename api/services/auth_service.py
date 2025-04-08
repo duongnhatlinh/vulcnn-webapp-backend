@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, create_refresh_token
 import hashlib
@@ -139,7 +139,7 @@ def generate_api_key(user_id, name, expiration_days=365):
     key_hash = hashlib.sha256(api_key_string.encode()).hexdigest()
     
     # Calculate expiration date
-    expires_at = datetime.utcnow() + timedelta(days=expiration_days)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=expiration_days)
     
     # Create API key record
     api_key_id = str(uuid.uuid4())

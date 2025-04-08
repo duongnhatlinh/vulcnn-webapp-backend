@@ -1,5 +1,5 @@
 from app import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 class File(db.Model):
     __tablename__ = 'files'
@@ -10,7 +10,7 @@ class File(db.Model):
     file_path = db.Column(db.String(512), nullable=False)
     content_type = db.Column(db.String(100), nullable=False)
     file_size = db.Column(db.Integer, nullable=False)
-    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    uploaded_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     status = db.Column(db.String(50), default='uploaded')
 
     # Relationships

@@ -4,7 +4,7 @@ import uuid
 import os
 import json
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.utils import secure_filename
 from app import db
 from models.scan import Scan
@@ -13,7 +13,8 @@ from models.file import File
 from models.pdg import PDG
 from models.report import Report
 from models.vulnerability import Vulnerability
-from services.scan_service import process_scan
+# from services.scan_service import process_scan
+import services.scan_service as scan_service
 
 scans_bp = Blueprint('scans', __name__)
 
@@ -92,7 +93,7 @@ def create_scan():
         default_project = Project(
             id=project_id,
             user_id=current_user_id,
-            name=f"Scan {datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%d %H:%M:%S')}",
+            name=f"Scan {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
             description="Auto-created project for scan"
         )
         db.session.add(default_project)
@@ -150,7 +151,7 @@ def create_scan():
     db.session.commit()
     
     # Start scan processing in background
-    process_scan.delay(scan_id, [f.id for f in uploaded_files])
+    scan_service.process_scan.delay(scan_id, [f.id for f in uploaded_files])
     
     return jsonify({
         'message': 'Scan created and processing started',
@@ -172,7 +173,7 @@ def cancel_scan(scan_id):
         return jsonify({'message': 'Scan cannot be cancelled anymore'}), 400
     
     scan.status = 'cancelled'
-    scan.completed_at = datetime.utcnow()
+    scan.completed_at = datetime.now(timezone.utc)
     db.session.commit()
     
     return jsonify({

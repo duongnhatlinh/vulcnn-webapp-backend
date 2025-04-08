@@ -1,5 +1,5 @@
 from app import db
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 class Webhook(db.Model):
@@ -10,7 +10,7 @@ class Webhook(db.Model):
     url = db.Column(db.String(512), nullable=False)
     secret_hash = db.Column(db.String(255))
     events = db.Column(db.Text)  # JSON array of event types
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     is_active = db.Column(db.Boolean, default=True)
 
     def __init__(self, id, user_id, url, secret_hash=None, events=None):

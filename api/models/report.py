@@ -1,5 +1,5 @@
 from app import db
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 class Report(db.Model):
@@ -10,7 +10,7 @@ class Report(db.Model):
     user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
     report_type = db.Column(db.String(50), nullable=False)  # pdf, csv, html, etc.
     file_path = db.Column(db.String(512), nullable=False)
-    generated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    generated_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     report_options = db.Column(db.Text)  # JSON string
 
     def __init__(self, id, scan_id, user_id, report_type, file_path, report_options=None):

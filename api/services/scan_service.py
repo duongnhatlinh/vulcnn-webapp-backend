@@ -1,4 +1,4 @@
-from app import db
+from app import db, app
 from celery import Celery
 from models.scan import Scan
 from models.file import File
@@ -8,7 +8,7 @@ import os
 import uuid
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import config
 
 # Initialize Celery
@@ -25,100 +25,121 @@ def process_scan(scan_id, file_ids):
         scan_id: The ID of the scan to process
         file_ids: List of file IDs to include in the scan
     """
-    try:
-        # Update scan status
-        scan = Scan.query.get(scan_id)
-        if not scan:
-            return {"error": "Scan not found"}
+
+    with app.app_context():  # Create application context
         
-        scan.status = "processing"
-        db.session.commit()
-        
-        # Process each file
-        for file_id in file_ids:
-            file = File.query.get(file_id)
-            if not file:
-                continue
+        try:
+            # Update scan status
+            scan = Scan.query.get(scan_id)
+            if not scan:
+                return {"error": "Scan not found"}
             
-            # Step 1: Normalize code
-            normalized_file_path = normalize_code(file.file_path)
-            if not normalized_file_path:
-                continue
-            
-            # Step 2: Generate PDG
-            pdg_file_path = generate_pdg(normalized_file_path)
-            if not pdg_file_path:
-                continue
-            
-            # Step 3: Generate image representation
-            image_file_path = generate_image(pdg_file_path)
-            if not image_file_path:
-                continue
-            
-            # Step 4: Run vulnerability prediction
-            vulnerabilities = predict_vulnerabilities(image_file_path, file.id)
-            if not vulnerabilities:
-                continue
-            
-            # Save PDG to database
-            with open(pdg_file_path, 'r') as f:
-                pdg_data = f.read()
-            
-            pdg_id = str(uuid.uuid4())
-            pdg = PDG(
-                id=pdg_id,
-                file_id=file.id,
-                scan_id=scan_id,
-                pdg_data=pdg_data
-            )
-            db.session.add(pdg)
-            
-            # Save vulnerabilities to database
-            for vuln in vulnerabilities:
-                vuln_id = str(uuid.uuid4())
-                vulnerability = Vulnerability(
-                    id=vuln_id,
-                    scan_id=scan_id,
-                    file_id=file.id,
-                    function_name=vuln.get('function_name'),
-                    line_number=vuln.get('line_number'),
-                    severity=vuln.get('severity'),
-                    vulnerability_type=vuln.get('type'),
-                    cwe_id=vuln.get('cwe_id'),
-                    description=vuln.get('description'),
-                    code_snippet=vuln.get('code_snippet'),
-                    recommendation=vuln.get('recommendation'),
-                    confidence_score=vuln.get('confidence_score')
-                )
-                db.session.add(vulnerability)
-                
-                # Update scan counts
-                scan.vulnerabilities_count += 1
-                if vuln.get('severity') == 'high':
-                    scan.high_severity_count += 1
-                elif vuln.get('severity') == 'medium':
-                    scan.medium_severity_count += 1
-                elif vuln.get('severity') == 'low':
-                    scan.low_severity_count += 1
-        
-        # Update scan status
-        scan.status = "completed"
-        scan.completed_at = datetime.utcnow()
-        db.session.commit()
-        
-        return {"status": "success", "scan_id": scan_id}
-    
-    except Exception as e:
-        # Log error and update scan status
-        print(f"Error processing scan {scan_id}: {str(e)}")
-        
-        scan = Scan.query.get(scan_id)
-        if scan:
-            scan.status = "failed"
-            scan.completed_at = datetime.utcnow()
+            scan.status = "processing"
             db.session.commit()
+
+            print("########Start process predict ###########")
+            
+            # Process each file
+            for file_id in file_ids:
+                file = File.query.get(file_id)
+                if not file:
+                    continue
+                
+                # Step 1: Normalize code
+                normalized_file_path = normalize_code(file.file_path)
+                if not normalized_file_path:
+                    continue
+
+                print("########Normalize code done ###########")
+    
+                # Step 2: Generate PDG
+                pdg_file_path = generate_pdg(normalized_file_path)
+                if not pdg_file_path:
+                    continue
+
+                print("########Generate code done ###########")
+                
+                # Step 3: Generate image representation
+                image_file_path = generate_image(pdg_file_path)
+                if not image_file_path:
+                    continue
+                
+                print("########Generate image done ###########")
+
+                # Step 4: Run vulnerability prediction
+                vulnerabilities = predict_vulnerabilities(image_file_path, file.id)
+                if not vulnerabilities:
+                    continue
+
+                print("vulnerabilities: ", vulnerabilities)
+
+                print("########Prediction vul done ###########")
+                
+                # Save PDG to database
+                with open(pdg_file_path, 'r') as f:
+                    pdg_data = f.read()
+                
+                pdg_id = str(uuid.uuid4())
+                pdg = PDG(
+                    id=pdg_id,
+                    file_id=file.id,
+                    scan_id=scan_id,
+                    pdg_data=pdg_data
+                )
+                db.session.add(pdg)
+
+                print("########Save pdg done ###########")
+                
+                # Save vulnerabilities to database
+                for vuln in vulnerabilities:
+                    vuln_id = str(uuid.uuid4())
+                    vulnerability = Vulnerability(
+                        id=vuln_id,
+                        scan_id=scan_id,
+                        file_id=file.id,
+                        function_name=vuln.get('function_name'),
+                        line_number=vuln.get('line_number'),
+                        severity=vuln.get('severity'),
+                        vulnerability_type=vuln.get('type'),
+                        cwe_id=vuln.get('cwe_id'),
+                        description=vuln.get('description'),
+                        code_snippet=vuln.get('code_snippet'),
+                        recommendation=vuln.get('recommendation'),
+                        confidence_score=vuln.get('confidence_score')
+                    )
+                    db.session.add(vulnerability)
+                    
+                    # Update scan counts
+                    scan.vulnerabilities_count += 1
+                    if vuln.get('severity') == 'high':
+                        scan.high_severity_count += 1
+                    elif vuln.get('severity') == 'medium':
+                        scan.medium_severity_count += 1
+                    elif vuln.get('severity') == 'low':
+                        scan.low_severity_count += 1
+
+                
+            
+            # Update scan status
+            scan.status = "completed"
+            scan.completed_at = datetime.now(timezone.utc)
+            db.session.commit()
+
+            print("########Predict successfully ###########")
+            
+            return {"status": "success", "scan_id": scan_id}
         
-        return {"error": str(e)}
+        except Exception as e:
+            # Log error and update scan status
+            print(f"Error processing scan {scan_id}: {str(e)}")
+            
+            scan = Scan.query.get(scan_id)
+            if scan:
+                scan.status = "failed"
+                scan.completed_at = datetime.now(timezone.utc)
+                db.session.commit()
+            
+            return {"error": str(e)}
 
 def normalize_code(file_path):
     """Normalize code by calling the normalization service"""

@@ -16,8 +16,8 @@ UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', '../data/uploads')
 MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB max upload
 
 # Service URLs
-NORMALIZATION_SERVICE_URL = os.environ.get('NORMALIZATION_SERVICE_URL', 'http://normalization:5001')
-PDG_GENERATOR_SERVICE_URL = os.environ.get('PDG_GENERATOR_SERVICE_URL', 'http://pdg-generator:5002')
-IMAGE_GENERATOR_SERVICE_URL = os.environ.get('IMAGE_GENERATOR_SERVICE_URL', 'http://image-generator:5003')
-PREDICTION_SERVICE_URL = os.environ.get('PREDICTION_SERVICE_URL', 'http://prediction:5004')
-RESULTS_SERVICE_URL = os.environ.get('RESULTS_SERVICE_URL', 'http://results:5005')
+NORMALIZATION_SERVICE_URL = os.environ.get('NORMALIZATION_SERVICE_URL', 'http://127.0.0.1:5001')
+PDG_GENERATOR_SERVICE_URL = os.environ.get('PDG_GENERATOR_SERVICE_URL', 'http://127.0.0.1:5002')
+IMAGE_GENERATOR_SERVICE_URL = os.environ.get('IMAGE_GENERATOR_SERVICE_URL', 'http://127.0.0.1:5003')
+PREDICTION_SERVICE_URL = os.environ.get('PREDICTION_SERVICE_URL', 'http://127.0.0.1:5004')
+RESULTS_SERVICE_URL = os.environ.get('RESULTS_SERVICE_URL', 'http://127.0.0.1:5005')

@@ -55,3 +55,17 @@ def health_check():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
+
+
+# Run API service
+# flask run --host 0.0.0.0 --port 5000
+
+# Test API register
+# curl -X POST http://localhost:5000/api/auth/register \
+#   -H "Content-Type: application/json" \
+#   -d '{"name":"Test User","email":"test@example.com","password":"TestPassword123"}'
+
+# Test API login
+# curl -X POST http://localhost:5000/api/auth/login \
+#   -H "Content-Type: application/json" \
+#   -d '{"email":"test@example.com","password":"TestPassword123"}'
