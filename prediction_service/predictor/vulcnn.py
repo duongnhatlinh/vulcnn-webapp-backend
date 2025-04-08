@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 class VulCNN:
     """
@@ -16,10 +17,12 @@ class VulCNN:
             model: Trained VulCNN model
         """
         self.model = model
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     def preprocess_image(self, image_data, max_len=100, hidden_size=128):
         """
-        Preprocess image data for input to the model
+        Preprocess image data for input to the model using the same
+        method as in the original VulCNN implementation
         
         Args:
             image_data: Tuple of (degree_channel, closeness_channel, katz_channel)
@@ -27,7 +30,7 @@ class VulCNN:
             hidden_size: Size of embedding vectors
             
         Returns:
-            numpy.ndarray: Preprocessed image representation
+            torch.Tensor: Preprocessed image representation
         """
         # Unpack channels
         degree_channel, closeness_channel, katz_channel = image_data
@@ -40,8 +43,9 @@ class VulCNN:
             for i in range(min(len(channel), max_len)):
                 vectors[j][i] = channel[i]
         
-        # Add batch dimension
-        return np.expand_dims(vectors, axis=0)
+        # Convert to torch tensor
+        tensor = torch.tensor(vectors, dtype=torch.float32).unsqueeze(0).to(self.device)
+        return tensor
     
     def predict(self, image_data):
         """
@@ -60,11 +64,13 @@ class VulCNN:
         processed_image = self.preprocess_image(image_data)
         
         # Make prediction
-        prediction = self.model.predict(processed_image)
+        with torch.no_grad():
+            outputs, _ = self.model(processed_image)
+            probabilities = torch.nn.functional.softmax(outputs, dim=1)
         
         # Get class probabilities
-        prob_not_vulnerable = prediction[0][0]
-        prob_vulnerable = prediction[0][1]
+        prob_not_vulnerable = probabilities[0][0].item()
+        prob_vulnerable = probabilities[0][1].item()
         
         # Determine if vulnerable
         is_vulnerable = prob_vulnerable > 0.5
@@ -81,7 +87,7 @@ class VulCNN:
         if is_vulnerable:
             # In a real implementation, you would have more sophisticated
             # type detection here, possibly using additional models or analysis
-            # This is a placeholder implementation
+            # This is similar to the original code's placeholder implementation
             if prob_vulnerable > 0.9:
                 result['vulnerability_type'] = 'buffer_overflow'
             elif prob_vulnerable > 0.8:
@@ -90,5 +96,10 @@ class VulCNN:
                 result['vulnerability_type'] = 'integer_overflow'
             else:
                 result['vulnerability_type'] = 'resource_leak'
+            
+            # Add function_name and line_number placeholders
+            # In a real implementation, this would come from the PDG analysis
+            result['function_name'] = 'unknown'
+            result['line_number'] = 0
         
         return result

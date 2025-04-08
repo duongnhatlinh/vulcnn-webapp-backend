@@ -3,21 +3,28 @@ import os
 import tempfile
 import pickle
 import numpy as np
+import torch
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
 # Import prediction modules
 from predictor.vulcnn import VulCNN
-from models.model import load_model
+from models.model import load_model, TextCNN
 
 # Load VulCNN model at startup
 vulcnn_model = None
 @app.before_first_request
 def initialize():
     global vulcnn_model
-    model_path = os.environ.get('VULCNN_MODEL_PATH', '../models/vulcnn_model.h5')
-    vulcnn_model = load_model(model_path)
+    model_path = os.environ.get('VULCNN_MODEL_PATH', '../models/modelCNN.pth')
+    hidden_size = int(os.environ.get('HIDDEN_SIZE', '128'))
+    vulcnn_model = load_model(model_path, hidden_size=hidden_size)
+    
+    # If no model found, try to create a dummy model for testing
+    if vulcnn_model is None:
+        print("No model found, creating dummy model for testing")
+        vulcnn_model = TextCNN(hidden_size=hidden_size)
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -59,8 +66,9 @@ def predict():
         with open(temp_path, 'rb') as f:
             image_data = pickle.load(f)
         
-        # Get file_id from request if available
-        file_id = request.form.get('file_id')
+        # Get file_id and function name from request if available
+        file_id = request.form.get('file_id', 'unknown')
+        function_name = request.form.get('function_name', 'unknown')
         
         # Run prediction
         predictor = VulCNN(vulcnn_model)
@@ -78,7 +86,7 @@ def predict():
             # Add additional information
             vulnerability = {
                 'file_id': file_id,
-                'function_name': result.get('function_name', 'Unknown'),
+                'function_name': function_name if function_name != 'unknown' else result.get('function_name', 'Unknown'),
                 'line_number': result.get('line_number', 0),
                 'severity': vuln_info.get('severity', 'medium'),
                 'type': vuln_info.get('type', 'Unknown'),
@@ -98,10 +106,9 @@ def predict():
     
     finally:
         # Clean up temporary files
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        import shutil
         if os.path.exists(temp_dir):
-            os.rmdir(temp_dir)
+            shutil.rmtree(temp_dir)
 
 def map_vulnerability_type(vuln_type):
     """Map predicted vulnerability type to standard information"""
@@ -149,3 +156,9 @@ def health_check():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5004)
+
+
+
+# export FLASK_APP=app.py
+# export VULCNN_MODEL_PATH=../models/vulcnn_model.h5
+# flask run --host 0.0.0.0 --port 5004
