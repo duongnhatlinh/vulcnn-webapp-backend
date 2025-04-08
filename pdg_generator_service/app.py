@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import os
 import tempfile
-import subprocess
+import shutil
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -16,7 +16,7 @@ def generate_pdg():
     Generate a Program Dependency Graph (PDG) from a C/C++ source file
     
     POST parameters:
-    - file: Normalized C/C++ source file
+    - file: C/C++ source file
     - output_path: (Optional) Where to save the generated PDG
     """
     # Check if file was uploaded
@@ -48,17 +48,20 @@ def generate_pdg():
             # Default: save to pdgs directory
             output_dir = os.environ.get('PDGS_DIR', '../data/pdgs')
             os.makedirs(output_dir, exist_ok=True)
-            output_path = os.path.join(output_dir, f"{filename}.dot")
+            output_path = os.path.join(output_dir, f"{os.path.splitext(filename)[0]}.dot")
+
         
-        # Generate PDG
-        joern_result = run_joern_analysis(temp_path)
-        if not joern_result:
+        # Generate PDG using Joern (file C -> file .bin -> file .dot)
+        pdg_file_path = run_joern_analysis(temp_path)
+        
+        if not pdg_file_path:
             return jsonify({'error': 'Joern analysis failed'}), 500
         
-        # Convert Joern output to PDG
-        pdg_result = generate_pdg_from_file(joern_result, output_path)
-        if not pdg_result:
-            return jsonify({'error': 'PDG generation failed'}), 500
+        # Move the PDG file to the output path
+        result = generate_pdg_from_file(pdg_file_path, output_path)
+        
+        if not result:
+            return jsonify({'error': 'Failed to save PDG file'}), 500
         
         return jsonify({
             'message': 'PDG generation successful',
@@ -70,10 +73,8 @@ def generate_pdg():
     
     finally:
         # Clean up temporary files
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
         if os.path.exists(temp_dir):
-            os.rmdir(temp_dir)
+            shutil.rmtree(temp_dir)
 
 @app.route('/health', methods=['GET'])
 def health_check():
