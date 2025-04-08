@@ -7,7 +7,6 @@ def normalize_source_code(source_code):
     This first-pass normalization includes:
     - Removing comments
     - Removing string literals (replacing with empty strings)
-    - Removing preprocessor directives (optional)
     - Normalizing whitespace
     
     Args:
