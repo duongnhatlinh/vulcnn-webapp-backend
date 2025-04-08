@@ -24,7 +24,7 @@ def generate_image_representation(pdg, sent2vec_model, embedding_size=128):
                 # Extract code from label if available
                 label_text = attrs['label']
                 if ',' in label_text:
-                    code = label_text[label_text.index(',') + 1:].strip()
+                    code = label_text[label_text.index('<BR/>') + 5:-1].strip()
             
             if code:
                 labels_code[node] = code
@@ -32,14 +32,11 @@ def generate_image_representation(pdg, sent2vec_model, embedding_size=128):
         # Calculate centrality measures
         degree_cen_dict = nx.degree_centrality(pdg)
         closeness_cen_dict = nx.closeness_centrality(pdg)
-        
-        # For directed graphs, convert to DiGraph for katz_centrality
-        G = nx.DiGraph(pdg) if not isinstance(pdg, nx.DiGraph) else pdg
-        try:
-            katz_cen_dict = nx.katz_centrality(G)
-        except Exception:
-            # Fallback if katz_centrality fails (e.g., convergence issues)
-            katz_cen_dict = {node: 0.5 for node in G.nodes()}
+
+        G = nx.DiGraph()
+        G.add_nodes_from(pdg.nodes())
+        G.add_edges_from(pdg.edges())
+        katz_cen_dict = nx.katz_centrality(G)
         
         # Initialize channels
         degree_channel = []

@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: sent2vec
+Version: 0.0.0
+License-File: LICENSE
+Requires-Dist: Cython>=0.29.13
+Requires-Dist: numpy>=1.17.1
+Dynamic: license-file
+Dynamic: requires-dist

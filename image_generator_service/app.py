@@ -97,3 +97,13 @@ def health_check():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5003)
+
+
+# Run image_generator service
+# flask run --host 0.0.0.0 --port 5003
+
+# Test image_generator service
+# curl -X GET http://localhost:5003/health
+
+# curl -X POST http://localhost:5003/generate_image \
+#   -F "pdg_file=@/home/kali/git_clone/vulcnn-webapp-backend/data/pdgs/raw_000062516_goodB2G.dot" \

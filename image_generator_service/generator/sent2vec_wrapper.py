@@ -72,3 +72,9 @@ def release_model(model, model_path):
             print("Sent2Vec model released")
     except Exception as e:
         print(f"Error releasing Sent2Vec model: {str(e)}")
+
+
+if __name__ == '__main__':
+    print("Sent2Vec wrapper module loaded")
+    print(print(os.path.exists("../../models/sent2vec_model.bin")))
+
